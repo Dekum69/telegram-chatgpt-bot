@@ -1,21 +1,18 @@
 import os
-import openai
+import google.generativeai as genai
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Configure Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-pro")
 
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_message = update.message.text
+    user_text = update.message.text
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": user_message}]
-    )
+    response = model.generate_content(user_text)
 
-    await update.message.reply_text(
-        response["choices"][0]["message"]["content"]
-    )
+    await update.message.reply_text(response.text)
 
 app = ApplicationBuilder().token(os.getenv("BOT_TOKEN")).build()
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply))
