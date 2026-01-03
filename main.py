@@ -1,38 +1,34 @@
-import os
-import threading
-import google.generativeai as genai
-from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, ContextTypes, filters
-from flask import Flask
 
-# -------- Gemini --------
+import os
+import google.generativeai as genai
+from telegram.ext import Updater, MessageHandler, Filters
+from flask import Flask
+import threading
+
+print("VERSION: STABLE TELEGRAM v13 BOT")
+
+# ---- Gemini ----
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel("gemini-pro")
 
-async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def reply(update, context):
     response = model.generate_content(update.message.text)
-    await update.message.reply_text(response.text)
+    update.message.reply_text(response.text)
 
-# -------- Telegram Bot --------
-def run_telegram_bot():
-    app = ApplicationBuilder().token(os.getenv("BOT_TOKEN")).build()
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply))
-    app.run_polling()
+def run_bot():
+    updater = Updater(os.getenv("BOT_TOKEN"), use_context=True)
+    dp = updater.dispatcher
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, reply))
+    updater.start_polling()
+    updater.idle()
 
-# -------- Flask (keep Render alive) --------
-web_app = Flask(__name__)
+# ---- Flask keep-alive ----
+app = Flask(__name__)
 
-@web_app.route("/")
+@app.route("/")
 def home():
-    return "Bot is running!"
+    return "Bot is running"
 
-def run_flask():
-    web_app.run(host="0.0.0.0", port=10000)
-
-# -------- Main --------
 if __name__ == "__main__":
-    # Flask in background
-    threading.Thread(target=run_flask).start()
-
-    # Telegram bot in MAIN thread
-    run_telegram_bot()
+    threading.Thread(target=run_bot).start()
+    app.run(host="0.0.0.0", port=10000)
