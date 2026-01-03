@@ -1,6 +1,6 @@
 services:
   - type: worker
-    name: telegram-chatgpt-bot
+    name: telegram-gemini-bot
     env: python
     plan: free
     startCommand: python main.py
