@@ -1,0 +1,6 @@
+services:
+  - type: worker
+    name: telegram-chatgpt-bot
+    env: python
+    plan: free
+    startCommand: python main.py
